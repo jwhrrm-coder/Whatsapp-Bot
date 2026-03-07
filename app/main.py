@@ -119,7 +119,9 @@ def get_school_by_phone(phone):
     docs = db.collection("School").where("Phone", "==", phone).limit(1).stream()
 
     for doc in docs:
-        return doc.to_dict()
+        data = doc.to_dict()
+        data["id"] = doc.id   # add document id
+        return data
 
     return None
 
@@ -142,8 +144,8 @@ async def handle_students(phone):
 
     students_ref = db.collection("School").document(school_id).collection("Students")
 
-    count_query = students_ref.count().get()
+    result = students_ref.count().get()
 
-    count = count_query[0][0].value
+    count = result[0].value
 
     await send_text(phone, f"📊 Total Students: {count}")
