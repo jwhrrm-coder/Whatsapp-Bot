@@ -20,6 +20,10 @@ async def webhook(request: Request):
     payload = await request.json()
     print(json.dumps(payload, indent=2))
 
+    # ignore events that are not user messages
+    if payload.get("event") != "message.received":
+        return {"status": "ignored"}
+
     try:
         message = payload["data"]["data"]["value"]["messages"][0]
 
@@ -27,21 +31,33 @@ async def webhook(request: Request):
         if not phone.startswith("+"):
             phone = "+" + phone
 
-        if message["type"] == "text":
-            text = message["text"]["body"].lower()
-        else:
-            text = ""
+        msg_type = message["type"]
 
-        if text == "start":
-            await send_welcome_template(phone)
-        else:
-            await send_text(phone, "Type *start* to begin.")
+        # TEXT
+        if msg_type == "text":
+            text = message["text"]["body"].lower()
+
+            if text == "start":
+                await send_welcome_template(phone)
+
+        # BUTTON CLICK
+        elif msg_type == "button":
+
+            button = message["button"]["payload"]
+
+            if button == "New Here":
+                await send_text(phone, "👋 Welcome new user!")
+
+            elif button == "Parent":
+                await send_text(phone, "👨‍👩‍👧 Parent services info.")
+
+            elif button == "Principal":
+                await send_text(phone, "🏫 Principal dashboard info.")
 
     except Exception as e:
         print("Parsing error:", e)
 
     return {"status": "ok"}
-
 
 async def send_welcome_template(phone):
 
