@@ -4,6 +4,7 @@ import httpx
 import json
 from app.firebase_client import db
 from app.services.whatsapp_service import send_welcome_template, send_text
+from datetime import datetime
 
 app = FastAPI()
 
@@ -42,10 +43,10 @@ async def webhook(request: Request):
         user_input = ""
 
         if msg_type == "text":
-            user_input = message["text"]["body"].lower()
+            user_input = message["text"]["body"].strip().lower()
 
         elif msg_type == "button":
-            user_input = message["button"]["payload"].lower()
+            user_input = message["button"]["payload"].strip().lower()
 
         # MAIN BOT LOGIC
         if user_input in ["start", "hi", "hello"]:
@@ -220,9 +221,10 @@ async def handle_attendance(phone):
     # CALCULATIONS
     pending_out = checkin - checkout
     absent = total_students - checkin - leave
-
+    now = datetime.now()
+    formatted_time = now.strftime("%d %b %I:%M %p")
     message = f"""
-📊 *Attendance Summary*
+📊 *Attendance Summary* for your School as of {formatted_time} :
 
 👨‍🎓 Total Students: {total_students}
 
