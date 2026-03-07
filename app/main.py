@@ -53,13 +53,13 @@ async def webhook(request: Request):
         if user_input in ["start", "hi", "hello"]:
             await send_welcome_template(phone)
 
-        elif user_input == "new here":
+        elif user_input == "new here" or user_input == "New here":
             await send_text(phone, "👋 Welcome new user!")
 
         elif user_input == "parent":
             await send_text(phone, "👨‍👩‍👧 Parent services info.")
 
-        elif user_input == "principal":
+        elif user_input == "principal" or user_input == "Principal":
             await handle_principal(phone)
         elif user_input == "students":
             await handle_students(phone)
