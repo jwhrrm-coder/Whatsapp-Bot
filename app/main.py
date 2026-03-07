@@ -46,8 +46,10 @@ async def webhook(request: Request):
         if msg_type == "text":
             user_input = message["text"]["body"].strip().lower()
 
-        elif msg_type == "button":
-            user_input = message["button"]["payload"].strip().lower()
+        elif msg_type == "interactive":
+            interactive = message.get("interactive", {})
+            if interactive.get("type") == "button_reply":
+                user_input = interactive["button_reply"]["id"].strip().lower()
 
         # MAIN BOT LOGIC
         if user_input in ["start", "hi", "hello"]:
@@ -59,13 +61,13 @@ async def webhook(request: Request):
         elif user_input == "parent":
             await send_text(phone, "👨‍👩‍👧 Parent services info.")
 
-        elif user_input == "principal" or user_input == "Principal":
+        elif user_input == "principal" :
             await handle_principal(phone)
         elif user_input == "students":
             await handle_students(phone)
         elif user_input == "other":
             await handle_other_menu(phone)
-        elif user_input == "attendance" or user_input == "Attendance":
+        elif user_input == "attendance" :
             await handle_attendance(phone)
 
     except Exception as e:
