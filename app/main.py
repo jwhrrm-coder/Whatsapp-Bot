@@ -1,51 +1,54 @@
 from fastapi import FastAPI, Request
-import requests
 import os
+import httpx
 
 app = FastAPI()
 
-AUTOMATEAI_TOKEN = "R2uDvAAGG66Y9klGF790Hnaluu0Me31CjLO5PB89"
+API_TOKEN = os.getenv("WHATSAPP_API_KEY")
 BASE_URL = "https://live.theautomate.ai"
+
+
+@app.get("/")
+def home():
+    return {"status": "bot running"}
+
 
 @app.post("/webhook")
 async def webhook(request: Request):
 
     data = await request.json()
+    print("Webhook data:", data)
 
-    print("Incoming:", data)
+    # Example extraction (depends on AutomateAI payload)
+    phone = data.get("from")
 
-    phone = data.get("phone")
-    message = data.get("message")
-
-    if message == "hi":
-        send_buttons(phone)
+    if phone:
+        await send_whatsapp_message(phone)
 
     return {"status": "ok"}
 
-def send_buttons(phone):
 
-    url = f"{BASE_URL}/api/send"
-
-    headers = {
-        "Authorization": f"Bearer {AUTOMATEAI_TOKEN}",
-        "Content-Type": "application/json"
-    }
+async def send_whatsapp_message(phone: str):
 
     payload = {
         "phone": phone,
-        "message": "Welcome Ayusman's Bot 🤖",
-        "header": "Choose an option",
-        "footer": "AI Engineering Bot",
+        "message": "Hello John, how are you?",
+        "header": "Test header",
+        "footer": "Test footer",
         "buttons": [
-            {
-                "id": "btn_1",
-                "title": "Check Facts"
-            },
-            {
-                "id": "btn_2",
-                "title": "More Info"
-            }
+            {"id": "id_1", "title": "Fine"},
+            {"id": "id_2", "title": "Not well"}
         ]
     }
 
-    requests.post(url, headers=headers, json=payload)
+    headers = {
+        "Authorization": f"Bearer {API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            f"{BASE_URL}/api/send",
+            json=payload,
+            headers=headers
+        )
