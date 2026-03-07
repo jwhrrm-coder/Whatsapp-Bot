@@ -2,6 +2,8 @@ from fastapi import FastAPI, Request
 import os
 import httpx
 import json
+from app.firebase_client import db
+from services.whatsapp_service import send_welcome_template, send_text
 
 app = FastAPI()
 
@@ -13,6 +15,11 @@ BASE_URL = "https://live.theautomate.ai"
 def home():
     return {"status": "bot running"}
 
+def clean_phone(phone: str):
+    phone = phone.replace("+", "")
+    if phone.startswith("91"):
+        phone = phone[2:]
+    return phone
 
 @app.post("/webhook")
 async def webhook(request: Request):
@@ -20,7 +27,6 @@ async def webhook(request: Request):
     payload = await request.json()
     print(json.dumps(payload, indent=2))
 
-    # ignore events that are not user messages
     if payload.get("event") != "message.received":
         return {"status": "ignored"}
 
@@ -33,42 +39,62 @@ async def webhook(request: Request):
 
         msg_type = message["type"]
 
-        # TEXT
+        user_input = ""
+
         if msg_type == "text":
-            text = message["text"]["body"].lower()
+            user_input = message["text"]["body"].lower()
 
-            if text == "start" or text == "Hi" or text == "Hello" or text == "hello" or text == "hi":
-                await send_welcome_template(phone)
-
-        # BUTTON CLICK
         elif msg_type == "button":
+            user_input = message["button"]["payload"].lower()
 
-            button = message["button"]["payload"]
+        # MAIN BOT LOGIC
+        if user_input in ["start", "hi", "hello"]:
+            await send_welcome_template(phone)
 
-            if button == "New Here":
-                await send_text(phone, "👋 Welcome new user!")
+        elif user_input == "new here":
+            await send_text(phone, "👋 Welcome new user!")
 
-            elif button == "Parent":
-                await send_text(phone, "👨‍👩‍👧 Parent services info.")
+        elif user_input == "parent":
+            await send_text(phone, "👨‍👩‍👧 Parent services info.")
 
-            elif button == "Principal":
-                await send_text(phone, "🏫 Principal dashboard info.")
+        elif user_input == "principal":
+            await handle_principal(phone)
 
     except Exception as e:
         print("Parsing error:", e)
 
     return {"status": "ok"}
 
-async def send_welcome_template(phone):
+async def handle_principal(phone):
+
+    cleaned = clean_phone(phone)
+
+    school = get_school_by_phone(cleaned)
+
+    if not school:
+        await send_text(phone, "School not registered.")
+        return
+
+    chief = school.get("Chief", "Sir/Madam")
+    name = school.get("Name", "School")
+
+    message = f"""
+Hello Sir/Madam {chief}, from {name}.
+
+Welcome to School Command Center.
+
+Choose Action:
+"""
 
     payload = {
         "phone": phone,
-        "template": {
-            "name": "welcome",
-            "language": {
-                "code": "en"
-            }
-        }
+        "message": message,
+        "buttons": [
+            {"id": "students", "title": "Students"},
+            {"id": "attendance", "title": "Attendance"},
+            {"id": "fees", "title": "Fees"},
+            {"id": "reports", "title": "Reports"}
+        ]
     }
 
     headers = {
@@ -77,32 +103,13 @@ async def send_welcome_template(phone):
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{BASE_URL}/api/send/template",
-            json=payload,
-            headers=headers
-        )
+        await client.post(f"{BASE_URL}/api/send", json=payload, headers=headers)
 
-    print("Template response:", response.text)
+def get_school_by_phone(phone):
 
+    docs = db.collection("School").where("Phone", "==", phone).limit(1).stream()
 
-async def send_text(phone, text):
+    for doc in docs:
+        return doc.to_dict()
 
-    payload = {
-        "phone": phone,
-        "message": text
-    }
-
-    headers = {
-        "Authorization": f"Bearer {TOKEN}",
-        "Content-Type": "application/json"
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{BASE_URL}/api/send",
-            json=payload,
-            headers=headers
-        )
-
-    print("Text response:", response.text)
+    return None

@@ -1,20 +1,54 @@
-import requests
-from app.config import ACCESS_TOKEN, PHONE_NUMBER_ID
+import os
+import httpx
 
-URL = f"https://graph.facebook.com/v19.0/{PHONE_NUMBER_ID}/messages"
+TOKEN = os.getenv("WHATSAPP_API_KEY")
+BASE_URL = "https://live.theautomate.ai"
 
-def send_message(phone, text):
+
+async def send_welcome_template(phone):
 
     payload = {
-        "messaging_product": "whatsapp",
-        "to": phone,
-        "type": "text",
-        "text": {"body": text}
+        "phone": phone,
+        "template": {
+            "name": "welcome",
+            "language": {
+                "code": "en"
+            }
+        }
     }
 
     headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Authorization": f"Bearer {TOKEN}",
         "Content-Type": "application/json"
     }
 
-    requests.post(URL, json=payload, headers=headers)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{BASE_URL}/api/send/template",
+            json=payload,
+            headers=headers
+        )
+
+    print("Template response:", response.text)
+
+
+async def send_text(phone, text):
+
+    payload = {
+        "phone": phone,
+        "message": text
+    }
+
+    headers = {
+        "Authorization": f"Bearer {TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{BASE_URL}/api/send",
+            json=payload,
+            headers=headers
+        )
+
+    print("Text response:", response.text)

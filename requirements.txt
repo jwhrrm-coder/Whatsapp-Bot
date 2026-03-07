@@ -3,4 +3,5 @@ uvicorn[standard]
 requests
 python-dotenv
 httpx
+firebase-admin
 
