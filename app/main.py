@@ -3,7 +3,7 @@ import os
 import httpx
 import json
 from app.firebase_client import db
-from services.whatsapp_service import send_welcome_template, send_text
+from app.services.whatsapp_service import send_welcome_template, send_text
 
 app = FastAPI()
 
