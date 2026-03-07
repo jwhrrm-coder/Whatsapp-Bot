@@ -59,6 +59,8 @@ async def webhook(request: Request):
 
         elif user_input == "principal":
             await handle_principal(phone)
+        elif user_input == "students":
+            await handle_students(phone)
 
     except Exception as e:
         print("Parsing error:", e)
@@ -69,19 +71,27 @@ async def handle_principal(phone):
 
     cleaned = clean_phone(phone)
 
-    school = get_school_by_phone(cleaned)
+    school_doc = get_school_by_phone(cleaned)
 
-    if not school:
+    if not school_doc:
         await send_text(phone, "School not registered.")
         return
 
-    chief = school.get("Chief", "Sir/Madam")
-    name = school.get("Name", "School")
+    school_id = school_doc["id"]
+
+    # SAVE SESSION
+    db.collection("railwayusers").document(phone).set({
+        "school_id": school_id,
+        "role": "principal"
+    }, merge=True)
+
+    chief = school_doc.get("Chief", "")
+    name = school_doc.get("Name", "School")
 
     message = f"""
-Hello Sir/Madam {chief}, from {name}.
+Hello Sir/Madam {chief},
 
-Welcome to School Command Center.
+Welcome to School Command Center of {name}.
 
 Choose Action:
 """
@@ -112,3 +122,28 @@ def get_school_by_phone(phone):
         return doc.to_dict()
 
     return None
+
+def get_user_school(phone):
+
+    doc = db.collection("railwayusers").document(phone).get()
+
+    if doc.exists:
+        return doc.to_dict().get("school_id")
+
+    return None
+
+async def handle_students(phone):
+
+    school_id = get_user_school(phone)
+
+    if not school_id:
+        await send_text(phone, "Session expired. Please type *Principal* again.")
+        return
+
+    students_ref = db.collection("School").document(school_id).collection("Students")
+
+    count_query = students_ref.count().get()
+
+    count = count_query[0][0].value
+
+    await send_text(phone, f"📊 Total Students: {count}")
