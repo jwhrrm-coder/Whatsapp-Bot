@@ -17,41 +17,37 @@ def home():
 @app.post("/webhook")
 async def webhook(request: Request):
 
-    data = await request.json()
-    print(json.dumps(data, indent=2))
+    payload = await request.json()
+    print(json.dumps(payload, indent=2))
 
-    phone = data.get("from")
-    message = data.get("message", {}).get("text", "").lower()
+    try:
+        message = payload["data"]["data"]["value"]["messages"][0]
 
-    if not phone:
-        return {"status": "ignored"}
+        phone = message["from"]
+        text = message["text"]["body"].lower()
 
-    if message in ["hi", "hello", "start"]:
-        await send_welcome(phone)
+        if text == "start":
+            await send_welcome_template(phone)
 
-    elif message == "fine":
-        await send_text(phone, "Glad you're doing well! 😊")
+        else:
+            await send_text(phone, "Type *start* to begin.")
 
-    elif message == "not well":
-        await send_text(phone, "Hope things get better soon ❤️")
-
-    else:
-        await send_text(phone, "Type *hi* to start.")
+    except Exception as e:
+        print("Parsing error:", e)
 
     return {"status": "ok"}
 
 
-async def send_welcome(phone):
+async def send_welcome_template(phone):
 
     payload = {
         "phone": phone,
-        "message": "Hello! How are you today?",
-        "header": "Welcome",
-        "footer": "Choose an option",
-        "buttons": [
-            {"id": "fine", "title": "Fine"},
-            {"id": "not_well", "title": "Not well"}
-        ]
+        "template": {
+            "name": "welcome",
+            "language": {
+                "code": "en"
+            }
+        }
     }
 
     headers = {
@@ -60,7 +56,14 @@ async def send_welcome(phone):
     }
 
     async with httpx.AsyncClient() as client:
-        await client.post(f"{BASE_URL}/api/send", json=payload, headers=headers)
+        response = await client.post(
+            f"{BASE_URL}/api/send/template",
+            json=payload,
+            headers=headers
+        )
+
+    print("Template response:", response.text)
+
 
 async def send_text(phone, text):
 
@@ -75,5 +78,8 @@ async def send_text(phone, text):
     }
 
     async with httpx.AsyncClient() as client:
-        await client.post(f"{BASE_URL}/api/send", json=payload, headers=headers)
-
+        await client.post(
+            f"{BASE_URL}/api/send",
+            json=payload,
+            headers=headers
+        )
