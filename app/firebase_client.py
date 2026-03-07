@@ -5,6 +5,7 @@ from firebase_admin import credentials, firestore
 
 cred_dict = json.loads(os.getenv("FIREBASE_SERVICE_ACCOUNT"))
 
+# Fix newline formatting for private key
 cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
 
 cred = credentials.Certificate(cred_dict)
