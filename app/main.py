@@ -64,7 +64,7 @@ async def webhook(request: Request):
             await handle_students(phone)
         elif user_input == "other":
             await handle_other_menu(phone)
-        elif user_input == "attendance":
+        elif user_input == "attendance" or user_input == "Attendance":
             await handle_attendance(phone)
 
     except Exception as e:
@@ -112,7 +112,7 @@ async def handle_principal(phone):
         "role": "principal"
     }, merge=True)
 
-    chief = school_doc.get("Chief", "")
+    chief = school_doc.get("Chief", "Principal")
     name = school_doc.get("Name", "School")
 
     message = f"""
