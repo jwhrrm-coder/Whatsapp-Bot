@@ -5,6 +5,7 @@ import json
 from app.firebase_client import db
 from app.services.whatsapp_service import send_welcome_template, send_text
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 app = FastAPI()
 
@@ -221,7 +222,7 @@ async def handle_attendance(phone):
     # CALCULATIONS
     pending_out = checkin - checkout
     absent = total_students - checkin - leave
-    now = datetime.now()
+    now = datetime.now(ZoneInfo("Asia/Kolkata"))
     formatted_time = now.strftime("%d %b %I:%M %p")
     message = f"""
 📊 *Attendance Summary* for your School as of {formatted_time} :
