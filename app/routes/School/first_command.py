@@ -3,7 +3,6 @@ import os
 import httpx
 
 from app.firebase_client import db
-from app.main import clean_phone
 from app.routes.School.helper import get_school_by_phone
 from app.services.whatsapp_service import send_text
 
@@ -82,3 +81,9 @@ async def handle_other_menu(phone):
 
     async with httpx.AsyncClient() as client:
         await client.post(f"{BASE_URL}/api/send", json=payload, headers=headers)
+
+def clean_phone(phone: str):
+    phone = phone.replace("+", "")
+    if phone.startswith("91"):
+        phone = phone[2:]
+    return phone
