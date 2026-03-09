@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from zoneinfo import ZoneInfo
 
 from app.firebase_client import db
@@ -133,9 +133,7 @@ async def handle_finance(phone):
     due = expected - yearly
 
     message = f"""
-💰 *School Finance Report*
-
-🏫 {school_name}
+💰 *School Finance Report* for 🏫 {school_name}
 
 ━━━━━━━━━━━━━━━━━━
 
@@ -143,25 +141,13 @@ async def handle_finance(phone):
 
 📊 *Fee Overview*
 
-💳 Expected Fee (Session)
-₹ {expected}
+💳 Expected Fee (Session) : ₹{expected}
 
-⚠️ Pending / Due Fee
-₹ {due}
+⚠️ Pending / Due Fee : ₹{due}
 
-📅 This Month Paid
-₹ {monthly}
+📅 This Month Paid : ₹{monthly}
 
-📆 This Year Paid
-₹ {yearly}
-
-━━━━━━━━━━━━━━━━━━
-
-Reply with:
-
-• Attendance
-• Fees
-• Other
+📆 This Year Paid : ₹{yearly}
 """
 
     await send_text(phone, message)

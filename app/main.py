@@ -70,8 +70,6 @@ async def webhook(request: Request):
             await handle_attendance(phone)
         elif user_input == "fees" :
             await handle_finance(phone)
-        else:
-            await send_welcome_template(phone)
 
     except Exception as e:
         print("Parsing error:", e)
