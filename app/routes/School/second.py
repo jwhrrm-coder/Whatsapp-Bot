@@ -151,3 +151,37 @@ async def handle_finance(phone):
 """
 
     await send_text(phone, message)
+
+async def handle_idcard_status(phone):
+
+    school_id = get_user_school(phone)
+
+    if not school_id:
+        await send_text(phone, "Session expired. Please type *Principal* again.")
+        return
+
+    # Get school document
+    school_doc = db.collection("School").document(school_id).get().to_dict()
+
+    session_id = school_doc.get("csession")
+    school_name = school_doc.get("Name", "School")
+
+    # Get all classes
+    classes_ref = db.collection("School") \
+        .document(school_id) \
+        .collection("Session") \
+        .document(session_id) \
+        .collection("Class") \
+        .stream()
+
+    message = f"🎓 *ID Card Status*\n for 🏫 {school_name}\n\n"
+
+    for c in classes_ref:
+        data = c.to_dict()
+
+        class_name = data.get("Name", c.id)
+        status = data.get("ou", "Unknown")
+
+        message += f"{class_name} : {status}\n"
+
+    await send_text(phone, message)

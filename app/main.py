@@ -4,7 +4,7 @@ import httpx
 import json
 from app.firebase_client import db
 from app.routes.School.first_command import handle_principal, handle_other_menu
-from app.routes.School.second import handle_attendance, handle_finance
+from app.routes.School.second import handle_attendance, handle_finance, handle_idcard_status
 from app.services.whatsapp_service import send_welcome_template, send_text
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -55,23 +55,20 @@ async def webhook(request: Request):
         # MAIN BOT LOGIC
         if user_input in ["start", "hi", "hello"]:
             await send_welcome_template(phone)
-
         elif user_input == "new here" or user_input == "New here":
             await send_text(phone, "👋 Welcome new user!")
-
         elif user_input == "parent":
             await send_text(phone, "👨‍👩‍👧 Parent services info.")
-
-        elif user_input == "principal" :
+        elif user_input == "principal":
             await handle_principal(phone)
         elif user_input == "other":
             await handle_other_menu(phone)
-        elif user_input == "attendance" :
+        elif user_input == "attendance":
             await handle_attendance(phone)
-        elif user_input == "fees" :
+        elif user_input == "fees":
             await handle_finance(phone)
-
+        elif user_input == "idcard":
+            await handle_idcard_status(phone)
     except Exception as e:
         print("Parsing error:", e)
-
     return {"status": "ok"}
