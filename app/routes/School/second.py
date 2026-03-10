@@ -183,7 +183,7 @@ async def handle_idcard_status(phone):
         data = c.to_dict()
 
         class_name = data.get("Name", c.id)
-        status = data.get("ou", "❌ Not Generated")
+        status = data.get("status", "❌ Not Generated")
 
         message += f"{class_name} : {status}\n"
 
