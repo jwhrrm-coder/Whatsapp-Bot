@@ -8,183 +8,211 @@ from app.services.whatsapp_service import send_text
 
 async def handle_attendance(phone):
 
-    school_id = get_user_school(phone)
+    try:
+        school_id = get_user_school(phone)
 
-    if not school_id:
-        await send_text(phone, "Session expired. Please type *Principal* again.")
-        return
+        if not school_id:
+            await send_text(phone, "⚠️ Session expired. Please type *Principal* again.")
+            return
 
-    school_doc = db.collection("School").document(school_id).get().to_dict()
-    session_id = school_doc.get("cse")
+        school_doc = db.collection("School").document(school_id).get().to_dict()
 
-    # TOTAL STUDENTS
-    sessions = db.collection("School").document(school_id).collection("Session").stream()
+        if not school_doc:
+            await send_text(phone, "⚠️ School data not found.")
+            return
 
-    total_students = 0
-    for s in sessions:
-        data = s.to_dict()
-        total_students += data.get("feet", 0)
+        session_id = school_doc.get("cse")
 
-    # CHECK IN & CHECK OUT
-    classes = db.collection("School").document(school_id) \
-        .collection("Session").document(session_id) \
-        .collection("Class").stream()
+        if not session_id:
+            await send_text(phone, "⚠️ Current session not configured.")
+            return
 
-    checkin = 0
-    checkout = 0
+        # TOTAL STUDENTS
+        sessions = db.collection("School").document(school_id).collection("Session").stream()
 
-    for c in classes:
-        data = c.to_dict()
-        checkin += int(data.get("pcount", 0))
-        checkout += int(data.get("pcount1", 0))
+        total_students = 0
+        for s in sessions:
+            data = s.to_dict()
+            total_students += int(data.get("feet", 0))
 
-    # LEAVE
-    leave_docs = db.collection("School").document(school_id) \
-        .collection("Session").document(session_id) \
-        .collection("Leave").stream()
+        # CHECK IN & CHECK OUT
+        classes = db.collection("School").document(school_id) \
+            .collection("Session").document(session_id) \
+            .collection("Class").stream()
 
-    leave = len(list(leave_docs))
+        checkin = 0
+        checkout = 0
 
-    # CALCULATIONS
-    pending_out = checkin - checkout
-    absent = total_students - checkin - leave
-    now = datetime.now(ZoneInfo("Asia/Kolkata"))
-    formatted_time = now.strftime("%d %b %I:%M %p")
-    message = f"""
-📊 *Attendance Summary* for your School as of {formatted_time} :
+        for c in classes:
+            data = c.to_dict()
+            checkin += int(data.get("pcount", 0))
+            checkout += int(data.get("pcount1", 0))
+
+        # LEAVE
+        leave_docs = db.collection("School").document(school_id) \
+            .collection("Session").document(session_id) \
+            .collection("Leave").stream()
+
+        leave = len(list(leave_docs))
+
+        pending_out = checkin - checkout
+        absent = total_students - checkin - leave
+
+        now = datetime.datetime.now(ZoneInfo("Asia/Kolkata"))
+        formatted_time = now.strftime("%d %b %I:%M %p")
+
+        message = f"""
+📊 *Attendance Summary*
+as of {formatted_time}
 
 👨‍🎓 Total Students: {total_students}
 
-✅ Check IN (Present): {checkin}
-🚪 Check OUT: {checkout}
+✅ Check IN : {checkin}
+🚪 Check OUT : {checkout}
 
-⏳ Pending OUT: {pending_out}
+⏳ Pending OUT : {pending_out}
 
-🏖 Leave: {leave}
-❌ Absent: {absent}
+🏖 Leave : {leave}
+❌ Absent : {absent}
 """
 
-    await send_text(phone, message)
+        await send_text(phone, message)
 
+    except Exception as e:
+        print("Attendance Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch attendance data right now. Please try again later.")
 
 async def handle_finance(phone):
 
-    school_id = get_user_school(phone)
+    try:
+        school_id = get_user_school(phone)
 
-    if not school_id:
-        await send_text(phone, "Session expired. Please type *Principal* again.")
-        return
+        if not school_id:
+            await send_text(phone, "⚠️ Session expired. Please type *Principal* again.")
+            return
 
-    school_doc = db.collection("School").document(school_id).get().to_dict()
-    school_name = school_doc.get("Name", "School")
-    session_id = school_doc.get("cse")
+        school_doc = db.collection("School").document(school_id).get().to_dict()
 
-    now = datetime.datetime.now()
-    year = str(now.year)
-    month = str(now.month)
+        if not school_doc:
+            await send_text(phone, "⚠️ School information not found.")
+            return
 
-    # TOTAL STUDENTS
-    classes = db.collection("School") \
-        .document(school_id) \
-        .collection("Session") \
-        .document(session_id) \
-        .collection("Class") \
-        .stream()
+        school_name = school_doc.get("Name", "School")
+        session_id = school_doc.get("cse")
 
-    students = 0
+        now = datetime.datetime.now()
+        year = str(now.year)
+        month = str(now.month)
 
-    for c in classes:
-        data = c.to_dict()
-        students += int(data.get("feet", 0))
+        # TOTAL STUDENTS
+        classes = db.collection("School") \
+            .document(school_id) \
+            .collection("Session") \
+            .document(session_id) \
+            .collection("Class") \
+            .stream()
 
-    # MONTHLY COLLECTION
-    days = db.collection("School") \
-        .document(school_id) \
-        .collection("Fee") \
-        .document(year) \
-        .collection("Month") \
-        .document(month) \
-        .collection("Day") \
-        .stream()
+        students = 0
+        for c in classes:
+            data = c.to_dict()
+            students += int(data.get("feet", 0))
 
-    monthly = 0
+        # MONTHLY COLLECTION
+        days = db.collection("School") \
+            .document(school_id) \
+            .collection("Fee") \
+            .document(year) \
+            .collection("Month") \
+            .document(month) \
+            .collection("Day") \
+            .stream()
 
-    for d in days:
-        data = d.to_dict()
-        monthly += int(data.get("Total_Fee", 0))
+        monthly = 0
+        for d in days:
+            data = d.to_dict()
+            monthly += int(data.get("Total_Fee", 0))
 
-    # YEARLY COLLECTION
-    months = db.collection("School") \
-        .document(school_id) \
-        .collection("Fee") \
-        .document(year) \
-        .collection("Month") \
-        .stream()
+        # YEARLY COLLECTION
+        months = db.collection("School") \
+            .document(school_id) \
+            .collection("Fee") \
+            .document(year) \
+            .collection("Month") \
+            .stream()
 
-    yearly = 0
+        yearly = 0
+        for m in months:
+            data = m.to_dict()
+            yearly += int(data.get("Fee", 0))
 
-    for m in months:
-        data = m.to_dict()
-        yearly += int(data.get("Fee", 0))
+        expected = students * 500
+        due = expected - yearly
 
-    # Example expected fee calculation
-    expected = students * 500   # adjust if needed
+        message = f"""
+💰 *School Finance Report*
+🏫 {school_name}
 
-    due = expected - yearly
+👨‍🎓 Students : {students}
 
-    message = f"""
-💰 *School Finance Report* for 🏫 {school_name}
+💳 Expected Fee : ₹{expected}
 
-━━━━━━━━━━━━━━━━━━
+⚠️ Pending Fee : ₹{due}
 
-👨‍🎓 Students in Session: {students}
+📅 This Month : ₹{monthly}
 
-📊 *Fee Overview*
-
-💳 Expected Fee (Session) : ₹{expected}
-
-⚠️ Pending / Due Fee : ₹{due}
-
-📅 This Month Paid : ₹{monthly}
-
-📆 This Year Paid : ₹{yearly}
+📆 This Year : ₹{yearly}
 """
 
-    await send_text(phone, message)
+        await send_text(phone, message)
+
+    except Exception as e:
+        print("Finance Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch finance data right now.")
+
 
 async def handle_idcard_status(phone):
 
-    school_id = get_user_school(phone)
+    try:
+        school_id = get_user_school(phone)
 
-    if not school_id:
-        await send_text(phone, "Session expired. Please type *Principal* again.")
-        return
+        if not school_id:
+            await send_text(phone, "⚠️ Session expired. Please type *Principal* again.")
+            return
 
-    # Get school document
-    school_doc = db.collection("School").document(school_id).get().to_dict()
+        school_doc = db.collection("School").document(school_id).get().to_dict()
 
-    session_id = school_doc.get("cse")
-    school_name = school_doc.get("Name", "School")
+        if not school_doc:
+            await send_text(phone, "⚠️ School record not found.")
+            return
 
-    # Get all classes
-    classes_ref = db.collection("School") \
-        .document(school_id) \
-        .collection("Session") \
-        .document(session_id) \
-        .collection("Class") \
-        .stream()
+        session_id = school_doc.get("cse")
+        school_name = school_doc.get("Name", "School")
 
-    message = f"🎓 *ID Card Status*\n for 🏫 {school_name}\n\n"
-    classes = list(classes_ref)
-    if not classes:
-        await send_text(phone, "No classes found for this session")
-        return
-    for c in classes_ref:
-        data = c.to_dict()
+        classes_ref = db.collection("School") \
+            .document(school_id) \
+            .collection("Session") \
+            .document(session_id) \
+            .collection("Class") \
+            .stream()
 
-        class_name = data.get("Name", c.id)
-        status = data.get("status", "❌ Not Generated")
+        classes = list(classes_ref)
 
-        message += f"{class_name} : {status}\n"
+        if not classes:
+            await send_text(phone, "⚠️ No classes found for current session.")
+            return
 
-    await send_text(phone, message)
+        message = f"🎓 *ID Card Status*\n🏫 {school_name}\n\n"
+
+        for c in classes:
+            data = c.to_dict()
+
+            class_name = data.get("Name", c.id)
+            status = data.get("status", "❌ Not Generated")
+
+            message += f"{class_name} : {status}\n"
+
+        await send_text(phone, message)
+
+    except Exception as e:
+        print("ID Card Status Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch ID card status right now.")
