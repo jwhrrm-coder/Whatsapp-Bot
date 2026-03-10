@@ -15,7 +15,7 @@ async def handle_attendance(phone):
         return
 
     school_doc = db.collection("School").document(school_id).get().to_dict()
-    session_id = school_doc.get("csession")
+    session_id = school_doc.get("cse")
 
     # TOTAL STUDENTS
     sessions = db.collection("School").document(school_id).collection("Session").stream()
@@ -77,7 +77,7 @@ async def handle_finance(phone):
 
     school_doc = db.collection("School").document(school_id).get().to_dict()
     school_name = school_doc.get("Name", "School")
-    session_id = school_doc.get("csession")
+    session_id = school_doc.get("cse")
 
     now = datetime.datetime.now()
     year = str(now.year)
@@ -163,7 +163,7 @@ async def handle_idcard_status(phone):
     # Get school document
     school_doc = db.collection("School").document(school_id).get().to_dict()
 
-    session_id = school_doc.get("csession")
+    session_id = school_doc.get("cse")
     school_name = school_doc.get("Name", "School")
 
     # Get all classes
@@ -175,12 +175,15 @@ async def handle_idcard_status(phone):
         .stream()
 
     message = f"🎓 *ID Card Status*\n for 🏫 {school_name}\n\n"
-
+    classes = list(classes_ref)
+    if not classes:
+        await send_text(phone, "No classes found for this session")
+        return
     for c in classes_ref:
         data = c.to_dict()
 
         class_name = data.get("Name", c.id)
-        status = data.get("ou", "Unknown")
+        status = data.get("ou", "❌ Not Generated")
 
         message += f"{class_name} : {status}\n"
 
