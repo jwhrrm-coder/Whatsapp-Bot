@@ -209,7 +209,7 @@ async def handle_idcard_status(phone):
             class_name = data.get("Name", c.id)
             status = data.get("status", "❌ Not Generated")
 
-            message += f"{class_name} : {status}\n"
+            message += f"Class {class_name} : {status}\n"
 
         await send_text(phone, message)
 
