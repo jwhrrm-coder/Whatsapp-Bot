@@ -3,6 +3,7 @@ import os
 import httpx
 import json
 from app.firebase_client import db
+from app.routes.Parents.parent_handler import handle_parent
 from app.routes.School.first_command import handle_principal, handle_other_menu
 from app.routes.School.second import handle_attendance, handle_finance, handle_idcard_status
 from app.services.whatsapp_service import send_welcome_template, send_text
@@ -58,7 +59,7 @@ async def webhook(request: Request):
         elif user_input == "new here" or user_input == "New here":
             await send_text(phone, "👋 Welcome new user!")
         elif user_input == "parent":
-            await send_text(phone, "👨‍👩‍👧 Parent services info.")
+            await handle_parent(phone)
         elif user_input == "principal":
             await handle_principal(phone)
         elif user_input == "other":
