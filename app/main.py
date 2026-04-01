@@ -61,7 +61,7 @@ async def webhook(request: Request):
         # MAIN BOT LOGIC
         if user_input in ["start", "hi", "hello"]:
             await send_welcome_template(phone)
-        elif user_input == "new here" or user_input == "New here":
+        elif user_input == "new_here" or user_input == "New here" or  user_input == "New Here":
             await handle_new_here(phone)
         elif user_input == "parent":
             await handle_parent(phone)
