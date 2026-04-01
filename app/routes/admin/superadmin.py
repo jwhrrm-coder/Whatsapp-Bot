@@ -1,7 +1,7 @@
-# ==================================
-# 🔹 SUPER ADMIN HANDLER
-# ==================================
-from firebase_admin import db
+
+
+
+from firebase_admin import firestore
 import httpx
 
 
@@ -13,7 +13,7 @@ def clean_phone(phone: str):
         phone = phone[2:]
     return phone
 async def handle_superadmin(phone):
-
+    db = firestore.client()
     try:
         clean = clean_phone(phone)
 
@@ -24,15 +24,13 @@ async def handle_superadmin(phone):
             )
             return
 
-        # 💾 SAVE SESSION
         db.collection("railwayusers").document(phone).set({
             "role": "superadmin"
         }, merge=True)
 
-        # 📲 BUTTON MENU
         payload = {
             "phone": phone,
-            "message": "👑 Welcome Super Admin Panel",
+            "message": "👑 Welcome Super Admin Panel as Jawahar Ram ! Please pic a Function to apply for Super Admin Function",
             "buttons": [
                 {"id": "all_schools", "title": "All Schools"},
                 {"id": "all_orders", "title": "All Orders"},
@@ -53,7 +51,7 @@ async def handle_superadmin(phone):
         await send_text(phone, "⚠️ Error loading Super Admin panel.")
 
 async def handle_all_schools(phone):
-
+    db = firestore.client()
     try:
         schools_ref = db.collection("School").stream()
 

@@ -36,7 +36,7 @@ async def handle_admin(phone):
         }, merge=True)
 
         # 📩 MESSAGE
-        message = "🏫 *Your Schools (Admin Panel)*\n\n"
+        message = "Welcome Admin to our Smart School Managment System. We Weclome you to the admin panel of your school. Here you can view all the details of your school and manage it effectively. \n\n🏫 *Your Schools are : *\n\n"
 
         for i, s in enumerate(found_schools, start=1):
             message += f"""
