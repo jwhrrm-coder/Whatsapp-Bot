@@ -3,7 +3,7 @@ import os
 import httpx
 import json
 from app.firebase_client import db
-from app.routes.Parents.helper.handle_selection import handle_parent_selection
+from app.routes.Parents.helper.handle_selection import handle_meetings, handle_notices, handle_parent_fees, handle_parent_selection, handle_present_status, handle_warnings, handle_warnings, show_parent_other_menu
 from app.routes.Parents.parent_handler import handle_parent
 from app.routes.School.first_command import handle_principal, handle_other_menu
 from app.routes.School.second import handle_attendance, handle_finance, handle_idcard_status
@@ -63,6 +63,18 @@ async def webhook(request: Request):
             await send_text(phone, "👋 Welcome new user!")
         elif user_input == "parent":
             await handle_parent(phone)
+        elif user_input == "present_status":
+            await handle_present_status(phone)
+        elif user_input == "notices":
+            await handle_notices(phone)
+        elif user_input == "more_parent":
+            await show_parent_other_menu(phone)
+        elif user_input == "warnings":
+            await handle_warnings(phone)
+        elif user_input == "meetings":
+            await handle_meetings(phone)            
+        elif user_input == "fees_parent":
+            await handle_parent_fees(phone)
         elif user_input == "principal":
             await handle_principal(phone)
         elif user_input == "other":
