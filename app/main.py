@@ -59,10 +59,9 @@ async def webhook(request: Request):
         handled = await handle_parent_selection(phone, user_input)
         if handled:
             return {"status": "ok"}
-        # MAIN BOT LOGIC
         if user_input in ["start", "hi", "hello"]:
             await send_welcome_template(phone)
-        elif user_input == "new_here" or user_input == "New here" or  user_input == "New Here":
+        elif user_input == "new_here" or user_input == "New here" or  user_input == "New Here" or user_input == "new here":
             await handle_new_here(phone)
         elif user_input == "parent":
             await handle_parent(phone)
