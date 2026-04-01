@@ -3,6 +3,7 @@ import os
 import httpx
 import json
 from app.firebase_client import db
+from app.routes.Parents.helper.handle_selection import handle_parent_selection
 from app.routes.Parents.parent_handler import handle_parent
 from app.routes.School.first_command import handle_principal, handle_other_menu
 from app.routes.School.second import handle_attendance, handle_finance, handle_idcard_status
@@ -52,7 +53,9 @@ async def webhook(request: Request):
             interactive = message.get("interactive", {})
             if interactive.get("type") == "button_reply":
                 user_input = interactive["button_reply"]["id"].strip().lower()
-
+        handled = await handle_parent_selection(phone, user_input)
+        if handled:
+            return {"status": "ok"}
         # MAIN BOT LOGIC
         if user_input in ["start", "hi", "hello"]:
             await send_welcome_template(phone)
