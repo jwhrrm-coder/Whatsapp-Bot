@@ -5,6 +5,7 @@ import httpx
 import os
 from app.firebase_client import db
 from app.services.whatsapp_service import send_text
+import datetime
 
 TOKEN = os.getenv("WHATSAPP_API_KEY")
 BASE_URL = "https://live.theautomate.ai"
@@ -208,9 +209,85 @@ async def handle_meetings(phone):
     await fetch_notices(phone, "Parents Meeting", "Meetings")
 
 
-# ===============================
-# 🔹 PRESENT STATUS (placeholder)
-# ===============================
+
+
+
 async def handle_present_status(phone):
 
-    await send_text(phone, "📊 Fetching today's check-in details...\n(Will implement next 👀)")
+    try:
+        user = db.collection("railwayusers").document(phone).get().to_dict()
+
+        if not user:
+            await send_text(phone, "⚠️ Session expired.")
+            return
+
+        school_id = user.get("school_id")
+        student_id = user.get("student_id")
+        name = user.get("student_name", "Student")
+
+        # 🔥 GET STUDENT
+        student_doc = db.collection("School") \
+            .document(school_id) \
+            .collection("Students") \
+            .document(student_id) \
+            .get()
+
+        if not student_doc.exists:
+            await send_text(phone, "⚠️ Student data not found.")
+            return
+
+        student = student_doc.to_dict()
+
+        dict1 = student.get("dict1", [])
+        dict2 = student.get("dict2", [])
+
+        # 📅 TODAY DATE FORMAT (same as Flutter)
+        now = datetime.datetime.now()
+        today = f"{now.day}/{now.month}/{now.year}"
+
+        checkin = "NA"
+        checkout = "NA"
+
+        # 🔹 FIND CHECK-IN
+        for entry in dict1:
+            if today in entry:
+                dt = datetime.datetime.fromisoformat(entry[today])
+                checkin = dt.strftime("%H:%M")
+                break
+
+        # 🔹 FIND CHECK-OUT
+        for entry in dict2:
+            if today in entry:
+                dt = datetime.datetime.fromisoformat(entry[today])
+                checkout = dt.strftime("%H:%M")
+                break
+
+        # 🔥 STATUS LOGIC
+        if checkin == "NA" and checkout == "NA":
+            status = "❌ Absent Today"
+        elif checkin != "NA" and checkout == "NA":
+            status = "🟡 In School"
+        else:
+            status = "✅ Day Completed"
+
+        # 📩 MESSAGE
+        message = f"""
+📊 *Today's Attendance*
+
+👤 {name}
+
+━━━━━━━━━━━━━━━━━━
+
+🟢 Check IN : {checkin}
+🔴 Check OUT : {checkout}
+
+━━━━━━━━━━━━━━━━━━
+
+📌 Status : {status}
+"""
+
+        await send_text(phone, message)
+
+    except Exception as e:
+        print("Present Status Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch attendance details.")
