@@ -2,7 +2,7 @@
 
 
 import httpx
-
+import os
 from app.firebase_client import db
 from app.services.whatsapp_service import send_text
 TOKEN = os.getenv("WHATSAPP_API_KEY")
