@@ -4,10 +4,14 @@
 from firebase_admin import db
 import httpx
 
-from app.main import clean_phone
+
 from app.services.whatsapp_service import BASE_URL, TOKEN, send_text
 
-
+def clean_phone(phone: str):
+    phone = phone.replace("+", "")
+    if phone.startswith("91"):
+        phone = phone[2:]
+    return phone
 async def handle_superadmin(phone):
 
     try:
