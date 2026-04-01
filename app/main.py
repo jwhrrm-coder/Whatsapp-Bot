@@ -50,7 +50,8 @@ async def webhook(request: Request):
 
         if msg_type == "text":
             user_input = message["text"]["body"].strip().lower()
-
+        elif msg_type == "button":
+            user_input = message["button"]["payload"].strip().lower()
         elif msg_type == "interactive":
             interactive = message.get("interactive", {})
             if interactive.get("type") == "button_reply":
