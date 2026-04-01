@@ -14,7 +14,7 @@ def clean_phone(phone: str):
     return phone
 
 async def handle_parent(phone):
-
+    await send_text(phone, "Please wait while we fetch your linked students...")
     try:
         clean = clean_phone(phone)
 
@@ -47,7 +47,6 @@ async def handle_parent(phone):
             await send_text(phone, "⚠️ No students found linked to this number.")
             return
 
-        # 💾 SAVE TEMP LIST
         db.collection("railwayusers").document(phone).set({
             "role": "parent_select",
             "students_list": students_found
