@@ -178,17 +178,19 @@ async def handle_admin_warnings(phone):
         data = doc.to_dict()
 
         message = "⚠️ *Overview for Schools*\n\n"
+        priority_keys = ["School", "College", "University"]
+        
+        for key in priority_keys:
+            if key in data and isinstance(data[key], list):
+                message += f"🏫 {key} : {len(data[key])}\n"
+        message += "\n━━━━━━━━━━━━━━━━━━\n\n"
 
         for key, value in data.items():
-
-            # skip non-list fields
+            if key in priority_keys:
+                continue
             if not isinstance(value, list):
                 continue
-
-            count = len(value)
-
-            message += f"{key} : {count}\n"
-
+            message += f"📍 {key} : {len(value)}\n"
         await send_text(phone, message)
 
     except Exception as e:

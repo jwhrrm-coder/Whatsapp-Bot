@@ -62,7 +62,7 @@ async def webhook(request: Request):
         if user_input in ["start", "hi", "hello"]:
             await send_welcome_template(phone)
         elif user_input == "new here" or user_input == "New here":
-            await send_text(phone, "👋 Welcome new user!")
+            await handle_new_here(phone)
         elif user_input == "parent":
             await handle_parent(phone)
         elif user_input == "present_status":
@@ -102,3 +102,49 @@ async def webhook(request: Request):
     except Exception as e:
         print("Parsing error:", e)
     return {"status": "ok"}
+
+
+async def handle_new_here(phone):
+
+    try:
+        message = """
+🌟 *Welcome to Student Next Light*
+
+Student Next Light is a complete *School Management System* designed to make education smarter, faster, and more connected.
+
+━━━━━━━━━━━━━━━━━━
+
+📚 *What we offer:*
+
+✅ Smart Attendance (Real-time Check IN/OUT)  
+✅ Parent Notifications & Alerts  
+✅ Fees Management & Reports  
+✅ Notices & Announcements  
+✅ ID Card & Gate Automation  
+✅ Full School ERP System  
+
+━━━━━━━━━━━━━━━━━━
+
+📲 *Download Our Apps:*
+
+👨‍🎓 *Student App*  
+https://play.google.com/store/apps/details?id=com.starwish.student_managment_app&hl=en_IN  
+
+👨‍👩‍👧 *Parents App*  
+https://play.google.com/store/apps/details?id=com.starwish.parents_next_lights&hl=en_IN  
+
+━━━━━━━━━━━━━━━━━━
+
+📞 *For Demo / Pricing / Login Details:*  
+Call or WhatsApp: +91 7000994158  
+
+━━━━━━━━━━━━━━━━━━
+
+We’re here to help your school go *digital & smart* 🚀
+"""
+
+        await send_text(phone, message)
+
+    except Exception as e:
+        print("New Here Error:", e)
+        await send_text(phone, "⚠️ Unable to load information right now.")
