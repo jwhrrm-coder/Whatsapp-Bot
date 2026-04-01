@@ -5,7 +5,8 @@ import httpx
 
 from app.firebase_client import db
 from app.services.whatsapp_service import send_text
-
+TOKEN = os.getenv("WHATSAPP_API_KEY")
+BASE_URL = "https://live.theautomate.ai"
 async def handle_parent_selection(phone, user_input):
 
     try:
@@ -72,8 +73,8 @@ Choose option:
     }
 
     headers = {
-        "Authorization": f"Bearer {TOKEN},
-        "Content-Type": "application/json",
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json",
     }
 
     async with httpx.AsyncClient() as client:
