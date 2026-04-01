@@ -12,6 +12,47 @@ def clean_phone(phone: str):
     if phone.startswith("91"):
         phone = phone[2:]
     return phone
+
+async def handle_all_schools(phone):
+    db = firestore.client()
+    try:
+        schools_ref = db.collection("School").stream()
+
+        messages = []
+        current_chunk = "🌍 *All Schools Overview*\n\n"
+
+        for i, s in enumerate(schools_ref, start=1):
+            data = s.to_dict()
+
+            entry = f"""
+{i}️⃣ *{data.get("Name","")}*
+
+📞 Phone: {data.get("Phone","")}
+👨‍🎓 Students: {data.get("totse",0)}
+📩 SMS Enabled: {data.get("smsend", False)}
+💎 Premium: {data.get("premium", False)}
+
+━━━━━━━━━━━━━━━━━━
+"""
+
+            # 🔥 If adding this exceeds limit → push chunk
+            if len(current_chunk) + len(entry) > 3500:
+                messages.append(current_chunk)
+                current_chunk = ""
+
+            current_chunk += entry
+
+        # add last chunk
+        if current_chunk:
+            messages.append(current_chunk)
+
+        # 📤 SEND ALL PARTS
+        for msg in messages:
+            await send_text(phone, msg)
+
+    except Exception as e:
+        print("All Schools Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch schools.")
 async def handle_superadmin(phone):
     db = firestore.client()
     try:
@@ -50,7 +91,6 @@ async def handle_superadmin(phone):
         print("SuperAdmin Error:", e)
         await send_text(phone, "⚠️ Error loading Super Admin panel.")
 
-async def handle_all_schools(phone):
     db = firestore.client()
     try:
         schools_ref = db.collection("School").stream()
