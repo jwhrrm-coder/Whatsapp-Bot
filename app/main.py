@@ -7,6 +7,8 @@ from app.routes.Parents.helper.handle_selection import handle_meetings, handle_n
 from app.routes.Parents.parent_handler import handle_parent
 from app.routes.School.first_command import handle_principal, handle_other_menu
 from app.routes.School.second import handle_attendance, handle_finance, handle_idcard_status
+from app.routes.admin.admin import handle_admin, handlhandle_all_schools, e_admin
+from app.routes.admin.superadmin import handle_all_schools, handle_all_schools, handle_superadmin
 from app.services.whatsapp_service import send_welcome_template, send_text
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -85,6 +87,12 @@ async def webhook(request: Request):
             await handle_finance(phone)
         elif user_input == "idcard":
             await handle_idcard_status(phone)
+        elif user_input == "admin":
+            await handle_admin(phone)
+        elif user_input == "superadmin":
+            await handle_superadmin(phone)
+        elif user_input == "all_schools":
+            await handle_all_schools(phone)
     except Exception as e:
         print("Parsing error:", e)
     return {"status": "ok"}
