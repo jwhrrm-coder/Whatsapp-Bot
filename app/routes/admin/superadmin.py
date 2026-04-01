@@ -13,9 +13,21 @@ def clean_phone(phone: str):
         phone = phone[2:]
     return phone
 
+def get_user_role(phone):
+    db = firestore.client()
+    doc = db.collection("railwayusers").document(phone).get()
+    if doc.exists:
+        return doc.to_dict().get("role")
+    return None
+
 async def handle_all_schools(phone):
     db = firestore.client()
     try:
+        role = get_user_role(phone)
+
+        if role != "superadmin":
+            await send_text(phone, "❌ Access denied.")
+            return
         schools_ref = db.collection("School").stream()
 
         messages = []
@@ -73,9 +85,9 @@ async def handle_superadmin(phone):
             "phone": phone,
             "message": "👑 Welcome Super Admin Panel as Jawahar Ram ! Please pic a Function to apply for Super Admin Function",
             "buttons": [
-                {"id": "all_schools", "title": "All Schools"},
-                {"id": "all_orders", "title": "All Orders"},
-                {"id": "warnings_admin", "title": "Warnings"},
+                {"id": "all_schools", "title": "All_Schools"},
+                {"id": "all_orders", "title": "All_Orders"},
+                {"id": "oversee_total", "title": "Oversee_Total"},
             ]
         }
 
@@ -116,3 +128,69 @@ async def handle_superadmin(phone):
     except Exception as e:
         print("All Schools Error:", e)
         await send_text(phone, "⚠️ Unable to fetch schools.")
+
+async def handle_all_orders(phone):
+    db = firestore.client()
+    try:
+        role = get_user_role(phone)
+
+        if role != "superadmin":
+            await send_text(phone, "❌ Access denied.")
+            return
+
+        base_ref = db.collection("Admin").document("Order")
+
+        completed = len(list(base_ref.collection("Completed").stream()))
+        orders = len(list(base_ref.collection("Orders").stream()))
+        progress = len(list(base_ref.collection("Progress").stream()))
+
+        message = f"""
+📦 *All Orders Summary*
+
+━━━━━━━━━━━━━━━━━━
+
+✅ Completed : {completed}
+📥 Orders : {orders}
+🔄 In Progress : {progress}
+"""
+
+        await send_text(phone, message)
+
+    except Exception as e:
+        print("Orders Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch orders.")
+
+async def handle_admin_warnings(phone):
+    db = firestore.client()
+    try:
+        role = get_user_role(phone)
+
+        if role != "superadmin":
+            await send_text(phone, "❌ Access denied.")
+            return
+
+        doc = db.collection("Admin").document("Order").get()
+
+        if not doc.exists:
+            await send_text(phone, "⚠️ No Overview data found.")
+            return
+
+        data = doc.to_dict()
+
+        message = "⚠️ *Overview for Schools*\n\n"
+
+        for key, value in data.items():
+
+            # skip non-list fields
+            if not isinstance(value, list):
+                continue
+
+            count = len(value)
+
+            message += f"{key} : {count}\n"
+
+        await send_text(phone, message)
+
+    except Exception as e:
+        print("Warnings Error:", e)
+        await send_text(phone, "⚠️ Unable to fetch Overview")
