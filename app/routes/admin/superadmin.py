@@ -70,7 +70,7 @@ async def handle_superadmin(phone):
     try:
         clean = clean_phone(phone)
 
-        if clean != "8093426959":
+        if clean != "7000994158":
             await   send_text(
                 phone,
                 "❌ You are not Jawahar Ram or any Manager under Next Light.\nAccess Denied."
